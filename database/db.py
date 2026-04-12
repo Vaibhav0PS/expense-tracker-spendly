@@ -90,3 +90,15 @@ def add_user(name, email, password):
     except sqlite3.IntegrityError:
         conn.close()
         return None
+
+
+def get_user_by_email(email):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, email, password_hash FROM users WHERE email = ?",
+        (email,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
