@@ -90,7 +90,49 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user = {
+        "name": "Priya Sharma",
+        "email": "priya.sharma@gmail.com",
+        "member_since": "September 2024",
+        "avatar_initials": "PS"
+    }
+
+    stats = {
+        "account_balance": "\u20b91,24,580",
+        "monthly_spending": "\u20b918,420",
+        "total_expenses": 47,
+        "top_category": "Food & Dining"
+    }
+
+    transactions = [
+        {"id": 1,  "date": "17 Apr 2026", "desc": "Zomato \u2014 dinner",             "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b9820"},
+        {"id": 2,  "date": "16 Apr 2026", "desc": "Metro \u2014上班",                 "category": "Transport",        "cls": "transport",    "amount": "-\u20b960"},
+        {"id": 3,  "date": "15 Apr 2026", "desc": "Amazon \u2014 earbuds",            "category": "Shopping",         "cls": "shopping",     "amount": "-\u20b93,499"},
+        {"id": 4,  "date": "14 Apr 2026", "desc": "Netflix subscription",             "category": "Entertainment",    "cls": "entertainment","amount": "-\u20b9199"},
+        {"id": 5,  "date": "13 Apr 2026", "desc": "Reliance Fresh \u2014 groceries",  "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b91,240"},
+        {"id": 6,  "date": "12 Apr 2026", "desc": "Bijli bill \u2014 BSES",          "category": "Utilities",        "cls": "utilities",    "amount": "-\u20b91,850"},
+        {"id": 7,  "date": "11 Apr 2026", "desc": "Swiggy \u2014 lunch",             "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b9340"},
+        {"id": 8,  "date": "10 Apr 2026", "desc": "Metro \u2014上班",                 "category": "Transport",        "cls": "transport",    "amount": "-\u20b960"},
+    ]
+
+    categories = [
+        {"name": "Food & Dining",    "amount": "\u20b98,240",  "pct": 45, "cls": "food"},
+        {"name": "Transport",         "amount": "\u20b93,180",  "pct": 17, "cls": "transport"},
+        {"name": "Shopping",          "amount": "\u20b92,899",  "pct": 16, "cls": "shopping"},
+        {"name": "Entertainment",     "amount": "\u20b92,100",  "pct": 11, "cls": "entertainment"},
+        {"name": "Utilities",         "amount": "\u20b92,001",  "pct": 11, "cls": "utilities"},
+    ]
+
+    return render_template(
+        "profile.html",
+        user=user,
+        stats=stats,
+        transactions=transactions,
+        categories=categories
+    )
 
 
 @app.route("/expenses/add")
