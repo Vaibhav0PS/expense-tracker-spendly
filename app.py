@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Flask, render_template, redirect, url_for, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -9,6 +11,35 @@ app.config["SECRET_KEY"] = "spendly-secret-key-change-in-production"
 with app.app_context():
     init_db()
     seed_db()
+
+
+@app.context_processor
+def inject_current_user():
+    user_id = session.get("user_id")
+    if not user_id:
+        return {"current_user": None}
+
+    from database.db import get_user_by_id
+    return {"current_user": get_user_by_id(user_id)}
+
+
+def initials_for_name(name):
+    parts = name.split()
+    if not parts:
+        return "U"
+    return "".join(part[0].upper() for part in parts[:2])
+
+
+def format_member_since(created_at):
+    if not created_at:
+        return "Recently"
+
+    try:
+        joined_at = datetime.fromisoformat(created_at)
+    except ValueError:
+        return "Recently"
+
+    return joined_at.strftime("%B %Y")
 
 
 # ------------------------------------------------------------------ #
@@ -90,14 +121,21 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    if not session.get("user_id"):
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    from database.db import get_user_by_id
+    db_user = get_user_by_id(user_id)
+    if db_user is None:
+        session.clear()
         return redirect(url_for("login"))
 
     user = {
-        "name": "Priya Sharma",
-        "email": "priya.sharma@gmail.com",
-        "member_since": "September 2024",
-        "avatar_initials": "PS"
+        "name": db_user["name"],
+        "email": db_user["email"],
+        "member_since": format_member_since(db_user["created_at"]),
+        "avatar_initials": initials_for_name(db_user["name"])
     }
 
     stats = {

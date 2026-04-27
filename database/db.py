@@ -102,3 +102,15 @@ def get_user_by_email(email):
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def get_user_by_id(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, email, created_at FROM users WHERE id = ?",
+        (user_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
