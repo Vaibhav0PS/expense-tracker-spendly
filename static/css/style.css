@@ -836,6 +836,21 @@ a { color: inherit; text-decoration: none; }
     color: #6b5e4a;
 }
 
+.badge-bills {
+    background: #f0ece6;
+    color: #6b5e4a;
+}
+
+.badge-health {
+    background: #eaf4ef;
+    color: #2f6b4f;
+}
+
+.badge-other {
+    background: #eef0f4;
+    color: #56606f;
+}
+
 /* Section 4: Category Breakdown */
 .category-list {
     padding: 1.25rem 1.5rem;
@@ -872,6 +887,7 @@ a { color: inherit; text-decoration: none; }
 .category-bar {
     height: 100%;
     border-radius: 999px;
+    background: var(--accent);
 }
 
 .cat-bar-food {
@@ -892,6 +908,18 @@ a { color: inherit; text-decoration: none; }
 
 .cat-bar-utilities {
     background: #6b5e4a;
+}
+
+.cat-bar-bills {
+    background: #6b5e4a;
+}
+
+.cat-bar-health {
+    background: #2f6b4f;
+}
+
+.cat-bar-other {
+    background: #56606f;
 }
 
 .category-pct {

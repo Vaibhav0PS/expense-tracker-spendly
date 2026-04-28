@@ -125,44 +125,25 @@ def profile():
     if not user_id:
         return redirect(url_for("login"))
 
-    from database.db import get_user_by_id
-    db_user = get_user_by_id(user_id)
-    if db_user is None:
+    from database.queries import get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown
+
+    user = get_user_profile(user_id)
+    if user is None:
         session.clear()
         return redirect(url_for("login"))
 
-    user = {
-        "name": db_user["name"],
-        "email": db_user["email"],
-        "member_since": format_member_since(db_user["created_at"]),
-        "avatar_initials": initials_for_name(db_user["name"])
-    }
+    summary = get_summary_stats(user_id)
 
+    # Map summary keys to the keys the template expects
     stats = {
-        "account_balance": "\u20b91,24,580",
-        "monthly_spending": "\u20b918,420",
-        "total_expenses": 47,
-        "top_category": "Food & Dining"
+        "account_balance": summary["total_spent"],
+        "monthly_spending": summary["monthly_spending"],
+        "total_expenses": summary["transaction_count"],
+        "top_category": summary["top_category"],
     }
 
-    transactions = [
-        {"id": 1,  "date": "17 Apr 2026", "desc": "Zomato \u2014 dinner",             "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b9820"},
-        {"id": 2,  "date": "16 Apr 2026", "desc": "Metro \u2014上班",                 "category": "Transport",        "cls": "transport",    "amount": "-\u20b960"},
-        {"id": 3,  "date": "15 Apr 2026", "desc": "Amazon \u2014 earbuds",            "category": "Shopping",         "cls": "shopping",     "amount": "-\u20b93,499"},
-        {"id": 4,  "date": "14 Apr 2026", "desc": "Netflix subscription",             "category": "Entertainment",    "cls": "entertainment","amount": "-\u20b9199"},
-        {"id": 5,  "date": "13 Apr 2026", "desc": "Reliance Fresh \u2014 groceries",  "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b91,240"},
-        {"id": 6,  "date": "12 Apr 2026", "desc": "Bijli bill \u2014 BSES",          "category": "Utilities",        "cls": "utilities",    "amount": "-\u20b91,850"},
-        {"id": 7,  "date": "11 Apr 2026", "desc": "Swiggy \u2014 lunch",             "category": "Food & Dining",    "cls": "food",         "amount": "-\u20b9340"},
-        {"id": 8,  "date": "10 Apr 2026", "desc": "Metro \u2014上班",                 "category": "Transport",        "cls": "transport",    "amount": "-\u20b960"},
-    ]
-
-    categories = [
-        {"name": "Food & Dining",    "amount": "\u20b98,240",  "pct": 45, "cls": "food"},
-        {"name": "Transport",         "amount": "\u20b93,180",  "pct": 17, "cls": "transport"},
-        {"name": "Shopping",          "amount": "\u20b92,899",  "pct": 16, "cls": "shopping"},
-        {"name": "Entertainment",     "amount": "\u20b92,100",  "pct": 11, "cls": "entertainment"},
-        {"name": "Utilities",         "amount": "\u20b92,001",  "pct": 11, "cls": "utilities"},
-    ]
+    transactions = get_recent_transactions(user_id, limit=10)
+    categories = get_category_breakdown(user_id)
 
     return render_template(
         "profile.html",
