@@ -10,6 +10,27 @@
         <p class="profile-subheading">Your expense overview at a glance</p>
     </div>
 
+    {# ---- Filter Bar ---- #}
+    <div class="filter-bar">
+        <div class="filter-presets">
+            <a href="{{ url_for('profile') }}"
+               class="filter-btn {% if active_preset == 'all_time' %}filter-btn-active{% endif %}">All Time</a>
+            <a href="{{ url_for('profile', date_from=preset_this_month[0], date_to=preset_this_month[1]) }}"
+               class="filter-btn {% if active_preset == 'this_month' %}filter-btn-active{% endif %}">This Month</a>
+            <a href="{{ url_for('profile', date_from=preset_last_3_months[0], date_to=preset_last_3_months[1]) }}"
+               class="filter-btn {% if active_preset == 'last_3_months' %}filter-btn-active{% endif %}">Last 3 Months</a>
+            <a href="{{ url_for('profile', date_from=preset_last_6_months[0], date_to=preset_last_6_months[1]) }}"
+               class="filter-btn {% if active_preset == 'last_6_months' %}filter-btn-active{% endif %}">Last 6 Months</a>
+        </div>
+
+        <form method="GET" action="{{ url_for('profile') }}" class="filter-custom">
+            <input type="date" name="date_from" value="{{ date_from_value }}" class="filter-date-input" aria-label="Start date">
+            <span class="filter-date-sep">to</span>
+            <input type="date" name="date_to" value="{{ date_to_value }}" class="filter-date-input" aria-label="End date">
+            <button type="submit" class="btn-primary btn-sm">Apply</button>
+        </form>
+    </div>
+
     {# Main grid: sidebar + main content #}
     <div class="profile-grid">
 

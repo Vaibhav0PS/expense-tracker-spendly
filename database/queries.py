@@ -21,6 +21,13 @@ def _format_date(date_str):
         return date_str
 
 
+def _date_clause(date_from, date_to):
+    """Return (clause, params) fragment for date filtering."""
+    if date_from and date_to:
+        return " AND date BETWEEN ? AND ?", [date_from, date_to]
+    return "", []
+
+
 def get_user_profile(user_id):
     """
     Return user profile dict for the profile page sidebar.
@@ -65,47 +72,48 @@ def get_user_profile(user_id):
     }
 
 
-def get_summary_stats(user_id):
+def get_summary_stats(user_id, date_from=None, date_to=None):
     """
     Return summary stats dict for the profile page stats row.
 
     Returns dict with:
       - total_spent: formatted "₹X,XXX.XX"
-      - monthly_spending: formatted "₹X,XXX.XX" (current calendar month)
+      - monthly_spending: formatted "₹X,XXX.XX" (filtered period total)
       - transaction_count: int
       - top_category: string or "—" if no expenses
     """
     conn = get_db()
     cursor = conn.cursor()
 
+    date_clause, date_params = _date_clause(date_from, date_to)
+
     # Total spent and transaction count
     cursor.execute(
-        "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?",
-        (user_id,),
+        "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?" + date_clause,
+        [user_id] + date_params,
     )
     row = cursor.fetchone()
     transaction_count = row[0]
     total_spent = row[1]
 
-    # Monthly spending (current calendar month)
-    now = datetime.now()
+    # Period spending (replaces calendar-month filter when dates are supplied)
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ? AND strftime('%Y-%m', date) = ?",
-        (user_id, now.strftime("%Y-%m")),
+        "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?" + date_clause,
+        [user_id] + date_params,
     )
-    monthly_spent = cursor.fetchone()[0]
+    period_spent = cursor.fetchone()[0]
 
-    # Top category (highest total)
+    # Top category (highest total in filtered period)
     cursor.execute(
         """
         SELECT category, SUM(amount) as total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ?""" + date_clause + """
         GROUP BY category
         ORDER BY total DESC
         LIMIT 1
         """,
-        (user_id,),
+        [user_id] + date_params,
     )
     top_row = cursor.fetchone()
     top_category = top_row["category"] if top_row else "—"
@@ -114,13 +122,13 @@ def get_summary_stats(user_id):
 
     return {
         "total_spent": _format_inr(total_spent),
-        "monthly_spending": _format_inr(monthly_spent),
+        "monthly_spending": _format_inr(period_spent),
         "transaction_count": transaction_count,
         "top_category": top_category,
     }
 
 
-def get_recent_transactions(user_id, limit=10):
+def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     """
     Return list of recent transactions, newest first.
 
@@ -129,15 +137,16 @@ def get_recent_transactions(user_id, limit=10):
     """
     conn = get_db()
     cursor = conn.cursor()
+    date_clause, date_params = _date_clause(date_from, date_to)
     cursor.execute(
         """
         SELECT date, description, category, amount
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ?""" + date_clause + """
         ORDER BY date DESC, id DESC
         LIMIT ?
         """,
-        (user_id, limit),
+        [user_id] + date_params + [limit],
     )
     rows = cursor.fetchall()
     conn.close()
@@ -154,7 +163,7 @@ def get_recent_transactions(user_id, limit=10):
     return transactions
 
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, date_from=None, date_to=None):
     """
     Return category breakdown list ordered by amount descending.
 
@@ -165,10 +174,11 @@ def get_category_breakdown(user_id):
     """
     conn = get_db()
     cursor = conn.cursor()
+    date_clause, date_params = _date_clause(date_from, date_to)
 
     cursor.execute(
-        "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?",
-        (user_id,),
+        "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ?" + date_clause,
+        [user_id] + date_params,
     )
     total = cursor.fetchone()[0]
 
@@ -180,11 +190,11 @@ def get_category_breakdown(user_id):
         """
         SELECT category, SUM(amount) as total
         FROM expenses
-        WHERE user_id = ?
+        WHERE user_id = ?""" + date_clause + """
         GROUP BY category
         ORDER BY total DESC
         """,
-        (user_id,),
+        [user_id] + date_params,
     )
     rows = cursor.fetchall()
     conn.close()
