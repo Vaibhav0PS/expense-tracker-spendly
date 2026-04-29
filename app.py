@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Flask, render_template, redirect, url_for, request, session
+from flask import Flask, render_template, redirect, url_for, request, session, flash, get_flashed_messages
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database.db import get_db, init_db, seed_db
@@ -132,9 +132,70 @@ def profile():
         session.clear()
         return redirect(url_for("login"))
 
-    summary = get_summary_stats(user_id)
+    # ── Date filter handling ──────────────────────────────────────────
+    raw_from = request.args.get("date_from")
+    raw_to   = request.args.get("date_to")
 
-    # Map summary keys to the keys the template expects
+    date_from, date_to = None, None
+
+    if raw_from:
+        try:
+            datetime.strptime(raw_from, "%Y-%m-%d")
+            date_from = raw_from
+        except ValueError:
+            pass
+
+    if raw_to:
+        try:
+            datetime.strptime(raw_to, "%Y-%m-%d")
+            date_to = raw_to
+        except ValueError:
+            pass
+
+    if date_from and date_to and date_from > date_to:
+        flash("Start date must be before end date.")
+        date_from, date_to = None, None
+
+    # ── Compute preset ranges ─────────────────────────────────────────
+    now = datetime.now()
+
+    this_month_from = datetime(now.year, now.month, 1).strftime("%Y-%m-%d")
+    this_month_to   = now.strftime("%Y-%m-%d")
+
+    # last_N_months: current calendar month plus previous N-1 months.
+    def months_ago(n):
+        m = now.month - n
+        y = now.year + m // 12
+        m = m % 12
+        if m < 1:
+            m += 12
+            y -= 1
+        return datetime(y, m, 1).strftime("%Y-%m-%d")
+
+    last_3_from = months_ago(3)
+    last_3_to   = now.strftime("%Y-%m-%d")
+
+    last_6_from = months_ago(6)
+    last_6_to   = now.strftime("%Y-%m-%d")
+
+    # ── Determine active preset ───────────────────────────────────────
+    if date_from is None and date_to is None:
+        active_preset = "all_time"
+    elif date_from == this_month_from and date_to == this_month_to:
+        active_preset = "this_month"
+    elif date_from == last_3_from and date_to == last_3_to:
+        active_preset = "last_3_months"
+    elif date_from == last_6_from and date_to == last_6_to:
+        active_preset = "last_6_months"
+    else:
+        active_preset = "custom"
+
+    # ── Query data ───────────────────────────────────────────────────
+    summary = get_summary_stats(user_id, date_from=date_from, date_to=date_to)
+    transactions = get_recent_transactions(user_id, limit=10, date_from=date_from, date_to=date_to)
+    categories = get_category_breakdown(user_id, date_from=date_from, date_to=date_to)
+
+    # Map summary keys to what the template expects
     stats = {
         "account_balance": summary["total_spent"],
         "monthly_spending": summary["monthly_spending"],
@@ -142,15 +203,17 @@ def profile():
         "top_category": summary["top_category"],
     }
 
-    transactions = get_recent_transactions(user_id, limit=10)
-    categories = get_category_breakdown(user_id)
-
     return render_template(
         "profile.html",
-        user=user,
-        stats=stats,
-        transactions=transactions,
-        categories=categories
+        user=user, stats=stats,
+        transactions=transactions, categories=categories,
+        filter_active=(date_from is not None),
+        active_preset=active_preset,
+        date_from_value=date_from or "",
+        date_to_value=date_to or "",
+        preset_this_month=(this_month_from, this_month_to),
+        preset_last_3_months=(last_3_from, last_3_to),
+        preset_last_6_months=(last_6_from, last_6_to),
     )
 
 
