@@ -1,0 +1,171 @@
+/* ================================================================ */
+/* Analytics Page V2 (Matching Screenshot)                          */
+/* ================================================================ */
+
+.analytics-page-v2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 60px - 100px);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+}
+
+.analytics-container {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+.analytics-card {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 4rem 2rem 3rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    text-align: center;
+}
+
+/* Decorative Blobs */
+.blob {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(233, 236, 239, 0.8) 0%, rgba(233, 236, 239, 0) 70%);
+    z-index: 1;
+}
+
+.blob-top {
+    top: -40px;
+    right: -40px;
+}
+
+.blob-bottom {
+    bottom: -40px;
+    left: -40px;
+}
+
+.analytics-card-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Icon Box */
+.analytics-icon-box {
+    width: 80px;
+    height: 80px;
+    background: #232d27; /* Dark green/grey from screenshot */
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 20px rgba(35, 45, 39, 0.15);
+}
+
+/* Badge */
+.analytics-badge {
+    background: #414d44;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 0.6rem 1.25rem;
+    border-radius: 100px;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+}
+
+/* Typography */
+.analytics-card-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.analytics-card-text {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    color: #6c757d;
+    line-height: 1.6;
+    max-width: 380px;
+    margin-bottom: 2.5rem;
+}
+
+/* Dots with Sequential Animation */
+.analytics-dots {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dee2e6;
+    animation: dotPulse 1.5s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+        background: #dee2e6;
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+        background: #6c757d;
+    }
+}
+
+/* Footer text */
+.analytics-card-footer {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    font-weight: 500;
+}
+
+/* Action button below card */
+.analytics-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .analytics-card {
+        padding: 3rem 1.5rem 2.5rem;
+        border-radius: 24px;
+    }
+    
+    .analytics-card-title {
+        font-size: 1.75rem;
+    }
+    
+    .analytics-card-text {
+        font-size: 0.95rem;
+    }
+}
