@@ -226,9 +226,61 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        return render_template("add_expense.html")
+
+    amount_str = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date_str = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+
+    if not amount_str:
+        return render_template("add_expense.html", error="Amount is required.")
+
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        return render_template("add_expense.html", error="Amount must be a valid number.")
+
+    if amount <= 0:
+        return render_template("add_expense.html", error="Amount must be greater than zero.")
+
+    if not category:
+        return render_template("add_expense.html", error="Category is required.")
+
+    if category not in categories:
+        return render_template("add_expense.html", error="Invalid category selected.")
+
+    if not date_str:
+        return render_template("add_expense.html", error="Date is required.")
+
+    try:
+        parsed_date = datetime.strptime(date_str, "%Y-%m-%d")
+        today = datetime.now().date()
+        if parsed_date.date() > today:
+            return render_template("add_expense.html", error="Date cannot be in the future.")
+    except ValueError:
+        return render_template("add_expense.html", error="Invalid date format.")
+
+    if not description:
+        description = None
+
+    from database.queries import insert_expense
+    expense_id = insert_expense(user_id, amount, category, date_str, description)
+
+    if expense_id is None:
+        return render_template("add_expense.html", error="Failed to save expense. Please try again.")
+
+    flash("Expense added successfully!")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")
