@@ -219,3 +219,21 @@ def get_category_breakdown(user_id, date_from=None, date_to=None):
         })
 
     return breakdown
+
+
+def insert_expense(user_id, amount, category, date, description):
+    """Insert a new expense and return expense_id or None on error."""
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+            (user_id, amount, category, date, description),
+        )
+        conn.commit()
+        expense_id = cursor.lastrowid
+        conn.close()
+        return expense_id
+    except Exception:
+        conn.close()
+        return None
