@@ -1,0 +1,523 @@
+ ▐▛███▜▌   Claude Code v2.1.132
+▝▜█████▛▘  nemotron-3-super · API Usage Billing
+  ▘▘ ▝▝    ~\Desktop\expense-tracker
+
+❯ /rename edit-expense 
+  ⎿  Session renamed to: edit-expense
+
+❯ /create-spec 08 edit expense                                                  
+
+● Bash(git status)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +6 lines (ctrl+o to expand)
+
+● I notice there's an untracked file: .claude/settings.json. According to the
+  instructions, I need to stop and have you commit or stash changes before
+  proceeding.
+
+  Would you like me to:
+  1. Add and commit this file (if it's part of the project setup), or
+  2. Should you stash or remove it temporarily?
+
+  Once the working directory is clean (no untracked or modified files), I'll
+  continue with creating the spec for the "08 edit expense" feature.
+
+✻ Brewed for 16s
+
+! git add .                                                                     
+  ⎿  (Bash completed with no output)
+
+! git commit -m "added hooks"                                                   
+  ⎿  [main f57537f] added hooks
+      1 file changed, 26 insertions(+)
+      create mode 100644 .claude/settings.json
+
+! git push origin main                                                          
+  ⎿  To https://github.com/Vaibhav0PS/expense-tracker-spendly.git
+        ac85b52..f57537f  main -> main
+
+❯ /create-spec 08 edit expense                                                  
+
+● Bash(git status)
+  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+
+     nothing to commit, working tree clean
+
+● Bash(git branch)
+  ⎿  * main
+
+● Bash(git checkout main)
+  ⎿  Your branch is up to date with 'origin/main'.
+     Already on 'main'
+
+● Bash(git pull origin main)
+  ⎿  From https://github.com/Vaibhav0PS/expense-tracker-spendly
+      * branch            main       -> FETCH_HEAD
+     Already up to date.
+
+● Bash(git checkout -b feature/edit-expense)
+  ⎿  Switched to a new branch 'feature/edit-expense'
+
+  Searched for 2 patterns, read 6 files (ctrl+o to expand)
+  Searched for 1 pattern, read 3 files (ctrl+o to expand)
+
+● Write(.claude\specs\08-edit-expense.md)
+  ⎿  Wrote 86 lines to .claude\specs\08-edit-expense.md
+      2 # Spec: Edit Expense
+      4 Step 8 allows users to edit existing expenses. When viewing their
+        open a pre-filled form with the expense's current details. After 
+        base and the user is redirected back to their profile page. This 
+        feature builds upon the existing expense tracking functionality a
+        ure.ollows the same validation patterns as the "Add Expense" feat
+      6 ## Depends on
+        ed columns)atabase setup (`expenses` table exists with all requir
+        ) Step 3: Login / Logout (`session["user_id"]` is set and checked
+      9 - Step 4 / 5: Profile page exists and
+     … +122 lines (ctrl+o to expand)
+
+● Branch:    feature/edit-expense
+  Spec file: .claude/specs/08-edit-expense.md
+  Title:     Edit Expense
+
+  Review the spec at .claude/specs/08-edit-expense.md then enter Plan Mode with
+  Shift+Tab twice to begin implementation.
+
+✻ Baked for 1m 48s
+
+❯ read the @.claude/specs/08-edit-expense.md and come up with a detailed        
+  implementaion plan                                                            
+  ⎿  Read .claude\specs\08-edit-expense.md (170 lines)
+
+  Read 1 file (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+
+● User approved Claude's plan
+  ⎿  Plan saved to: ~\.claude\plans\read-the-claude-specs-08-edit-expense-md-flo
+     ating-meerkat.md · /plan to edit
+     Implementation Plan: Edit Expense Feature
+
+     Context
+
+     This plan implements the "Edit Expense" feature (Step 8) for the Spendly
+     expense tracker. Users will be able to edit their existing expenses through
+      a form pre-filled with current values, with proper ownership validation to
+      ensure users can only edit their own expenses.
+
+     Changes Overview
+
+     1. Database Queries (database/queries.py)
+
+     - Add get_expense_by_id(expense_id, user_id) function to fetch an expense
+     only if it belongs to the specified user
+     - Add update_expense(expense_id, user_id, amount, category, date, 
+     description) function to update an expense with ownership verification
+     - Modify get_recent_transactions() to include the id column in the SELECT
+     clause so templates can build edit links
+
+     2. Application Logic (app.py)
+
+     - Import the new query functions from database.queries
+     - Replace the placeholder /expenses/<int:id>/edit route with a proper
+     GET+POST handler
+     - GET handler: Fetch expense using get_expense_by_id, return 404 if not
+     found/not owned, otherwise render edit form
+     - POST handler: Validate form data (same rules as add expense), call
+     update_expense, redirect to profile on success
+     - Update route decorator to accept both GET and POST methods
+
+     3. Templates
+
+     - Create templates/edit_expense.html: Form template extending base.html
+     with fields pre-populated from expense data
+     - Modify templates/profile.html: Add "Actions" column header and Edit link
+     (<a href="/expenses/{{ tx.id }}/edit">Edit</a>) to each transaction row
+
+     Implementation Steps
+
+     Phase 1: Database Layer
+
+     1. Add get_expense_by_id(expense_id, user_id) to database/queries.py
+     2. Add update_expense(expense_id, user_id, amount, category, date, 
+     description) to database/queries.py
+     3. Modify get_recent_transactions() to include id in SELECT clause
+
+     Phase 2: Application Layer
+
+     1. Import new functions in app.py
+     2. Implement GET handler for /expenses/<int:id>/edit:
+       - Check authentication
+       - Call get_expense_by_id(id, session['user_id'])
+       - If None, return 404
+       - Otherwise render edit_expense.html with expense data and categories
+     list
+     3. Implement POST handler for /expenses/<int:id>/edit:
+       - Check authentication
+       - Verify ownership via get_expense_by_id (or direct check)
+       - Validate form data (amount, category, date)
+       - Call update_expense with validated data
+       - On success: redirect to profile
+       - On failure: re-render form with errors and preserved values
+     4. Update route decorator to @app.route("/expenses/<int:id>/edit", 
+     methods=["GET", "POST"])
+
+     Phase 3: Frontend
+
+     1. Create templates/edit_expense.html based on add_expense.html but with
+     pre-filled values
+     2. Modify templates/profile.html to add Actions column and Edit links
+
+     Key Functions to Reuse/Reference
+
+     - Existing validation logic from add_expense route in app.py
+     - Existing insert_expense function in database/queries.py (as reference for
+      update_expense)
+     - Existing get_user_by_id function in database/db.py (for ownership
+     patterns)
+     - Existing form structure in add_expense.html
+
+     Testing Approach
+
+     1. Manual testing:
+       - Login as a user
+       - Navigate to profile
+       - Click Edit on an existing expense
+       - Verify form is pre-filled with correct data
+       - Submit valid changes and verify they appear in transaction list
+       - Test validation errors (invalid amount, category, date)
+       - Verify unauthorized access returns appropriate responses
+     2. Automated tests (to be written later):
+       - Unit tests for new query functions
+       - Route tests for GET/POST endpoints
+       - Security tests for ownership verification
+
+     File References
+
+     - database/queries.py - Add query functions
+     - app.py - Implement route handlers
+     - templates/edit_expense.html - Create new template
+     - templates/profile.html - Modify transaction table
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(database\queries.py)
+  ⎿  Added 58 lines
+      237      except Exception:
+      238          conn.close()
+      239          return None
+      240 +                                                              
+      241 +                                                              
+      242 +def get_expense_by_id(expense_id, user_id):                   
+      243 +    """                                                       
+      244 +    Retrieve a single expense by ID, only if it belongs to the
+          + given user.                                                  
+      245 +                                                              
+      246 +    Args:                                                     
+      247 +        expense_id (int): The ID of the expense to retrieve   
+      248 +        user_id (int): The ID of the user who should own the e
+          +xpense                                                        
+      249 +                                                              
+      250 +    Returns:                                                  
+      251 +        dict: Expense data if found and owned by user, None ot
+          +herwise                                                       
+      252 +    """                                                       
+      253 +    conn = get_db()                                           
+      254 +    cursor = conn.cursor()                                    
+      255 +    cursor.execute(                                           
+      256 +        "SELECT id, user_id, amount, category, date, descripti
+          +on, created_at "                                              
+      257 +        "FROM expenses WHERE id = ? AND user_id = ?",         
+      258 +        (expense_id, user_id),                                
+      259 +    )                                                         
+      260 +    row = cursor.fetchone()                                   
+      261 +    conn.close()                                              
+      262 +    return dict(row) if row else None                         
+      263 +                                                              
+      264 +                                                              
+      265 +def update_expense(expense_id, user_id, amount, category, date
+          +, description):                                               
+      266 +    """                                                       
+      267 +    Update an existing expense, only if it belongs to the give
+          +n user.                                                       
+      268 +                                                              
+      269 +    Args:                                                     
+      270 +        expense_id (int): The ID of the expense to update     
+      271 +        user_id (int): The ID of the user who should own the e
+          +xpense                                                        
+      272 +        amount (float): The new amount                        
+      273 +        category (str): The new category                      
+      274 +        date (str): The new date in YYYY-MM-DD format         
+      275 +        description (str): The new description (can be None)  
+      276 +                                                              
+      277 +    Returns:                                                  
+      278 +        bool: True if update succeeded, False otherwise       
+      279 +    """                                                       
+      280 +    conn = get_db()                                           
+      281 +    cursor = conn.cursor()                                    
+      282 +    try:                                                      
+      283 +        cursor.execute(                                       
+      284 +            """                                               
+      285 +            UPDATE expenses                                   
+      286 +            SET amount = ?, category = ?, date = ?, descriptio
+          +n = ?                                                         
+      287 +            WHERE id = ? AND user_id = ?                      
+      288 +            """,                                              
+      289 +            (amount, category, date, description, expense_id, 
+          +user_id),                                                     
+      290 +        )                                                     
+      291 +        conn.commit()                                         
+      292 +        rows_affected = cursor.rowcount                       
+      293 +        conn.close()                                          
+      294 +        return rows_affected > 0                              
+      295 +    except Exception:                                         
+      296 +        conn.close()                                          
+      297 +        return False                                          
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(database\queries.py)
+  ⎿  Added 3 lines, removed 2 lines
+      132      """
+      133      Return list of recent transactions, newest first.
+      134  
+      135 -    Each dict has: date, description, category, amount, cls   
+      135 +    Each dict has: id, date, description, category, amount, cl
+          +s                                                             
+      136      Amount is formatted as "₹X,XXX.XX".
+      137      """
+      138      conn = get_db()
+     ...
+      140      date_clause, date_params = _date_clause(date_from, date_to
+           )
+      141      cursor.execute(
+      142          """
+      143 -        SELECT date, description, category, amount            
+      143 +        SELECT id, date, description, category, amount        
+      144          FROM expenses
+      145          WHERE user_id = ?""" + date_clause + """
+      146          ORDER BY date DESC, id DESC
+     ...
+      154      transactions = []
+      155      for row in rows:
+      156          transactions.append({
+      157 +            "id": row["id"],                                  
+      158              "date": _format_date(row["date"]),
+      159              "desc": row["description"] or "",
+      160              "category": row["category"],
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Update(app.py)
+  ⎿  Added 1 line
+       4  from werkzeug.security import generate_password_hash, check_pas
+          sword_hash
+       5  
+       6  from database.db import get_db, init_db, seed_db
+       7 +from database.queries import get_expense_by_id, update_expense 
+       8  
+       9  app = Flask(__name__)
+      10  app.config["SECRET_KEY"] = "spendly-secret-key-change-in-produc
+          tion"
+
+● Update(app.py)
+  ⎿  Added 65 lines, removed 2 lines
+      284      return redirect(url_for("profile"))
+      285  
+      286  
+      287 -@app.route("/expenses/<int:id>/edit")                         
+      287 +@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+      288  def edit_expense(id):
+      289 -    return "Edit expense — coming in Step 8"                  
+      289 +    user_id = session.get("user_id")                          
+      290 +    if not user_id:                                           
+      291 +        return redirect(url_for("login"))                     
+      292  
+      293 +    if request.method == "GET":                               
+      294 +        expense = get_expense_by_id(id, user_id)              
+      295 +        if expense is None:                                   
+      296 +            # Expense not found or doesn't belong to user     
+      297 +            return render_template("error.html", message="Expe
+          +nse not found"), 404                                          
+      298  
+      299 +        categories = ["Food", "Transport", "Bills", "Health", 
+          +"Entertainment", "Shopping", "Other"]                         
+      300 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories)                                 
+      301 +                                                              
+      302 +    # POST request                                            
+      303 +    expense = get_expense_by_id(id, user_id)                  
+      304 +    if expense is None:                                       
+      305 +        # Expense not found or doesn't belong to user         
+      306 +        return render_template("error.html", message="Expense 
+          +not found"), 404                                              
+      307 +                                                              
+      308 +    amount_str = request.form.get("amount", "").strip()       
+      309 +    category = request.form.get("category", "").strip()       
+      310 +    date_str = request.form.get("date", "").strip()           
+      311 +    description = request.form.get("description", "").strip() 
+      312 +                                                              
+      313 +    categories = ["Food", "Transport", "Bills", "Health", "Ent
+          +ertainment", "Shopping", "Other"]                             
+      314 +                                                              
+      315 +    if not amount_str:                                        
+      316 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Amount is required.")    
+      317 +                                                              
+      318 +    try:                                                      
+      319 +        amount = float(amount_str)                            
+      320 +    except ValueError:                                        
+      321 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Amount must be a valid nu
+          +mber.")                                                       
+      322 +                                                              
+      323 +    if amount <= 0:                                           
+      324 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Amount must be greater th
+          +an zero.")                                                    
+      325 +                                                              
+      326 +    if not category:                                          
+      327 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Category is required.")  
+      328 +                                                              
+      329 +    if category not in categories:                            
+      330 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Invalid category selected
+          +.")                                                           
+      331 +                                                              
+      332 +    if not date_str:                                          
+      333 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Date is required.")      
+      334 +                                                              
+      335 +    try:                                                      
+      336 +        parsed_date = datetime.strptime(date_str, "%Y-%m-%d") 
+      337 +        today = datetime.now().date()                         
+      338 +        if parsed_date.date() > today:                        
+      339 +            return render_template("edit_expense.html", expens
+          +e=expense, categories=categories, error="Date cannot be in the
+          + future.")                                                    
+      340 +    except ValueError:                                        
+      341 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Invalid date format.")   
+      342 +                                                              
+      343 +    if not description:                                       
+      344 +        description = None                                    
+      345 +                                                              
+      346 +    success = update_expense(id, user_id, amount, category, da
+          +te_str, description)                                          
+      347 +                                                              
+      348 +    if not success:                                           
+      349 +        return render_template("edit_expense.html", expense=ex
+          +pense, categories=categories, error="Failed to update expense.
+          + Please try again.")                                          
+      350 +                                                              
+      351 +    flash("Expense updated successfully!")                    
+      352 +    return redirect(url_for("profile"))                       
+      353 +                                                              
+      354 +                                                              
+      355  @app.route("/expenses/<int:id>/delete")
+      356  def delete_expense(id):
+      357      return "Delete expense — coming in Step 9"
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(templates\edit_expense.html)
+  ⎿  Wrote 67 lines to templates\edit_expense.html
+       1 {% extends "base.html" %}
+       2 
+       3 {% block title %}Edit expense — Spendly{% endblock %}
+       4 
+       5 {% block content %}
+       6 
+       7 <section class="auth-section">
+       8     <div class="auth-container">
+       9 
+      10         <div class="auth-header">
+     … +72 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(templates\profile.html)
+  ⎿  Error editing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(templates\profile.html)
+  ⎿  Error editing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(templates\profile.html)
+  ⎿  Added 1 line
+      89                                  <th>Description</th>
+      90                                  <th>Category</th>
+      91                                  <th class="text-right">Amount</
+          th>
+      92 +                                <th>Actions</th>               
+      93                              </tr>
+      94                          </thead>
+      95                          <tbody>
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(templates\profile.html)
+  ⎿  Added 1 line
+      101                                      <span class="category-badg
+           e badge-{{ txn.cls }}">{{ txn.category }}</span>
+      102                                  </td>
+      103                                  <td class="cell-amount text-ri
+           ght">{{ txn.amount }}</td>
+      104 +                                <td><a href="{{ url_for('edit_
+          +expense', id=txn.id) }}" class="btn-icon btn-sm">✏️</a></td>  
+      105                              </tr>
+      106                              {% endfor %}
+      107                          </tbody>
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Update(app.py)
+  ⎿  Added 1 line, removed 1 line
+      1  from datetime import datetime
+      2  
+      3 -from flask import Flask, render_template, redirect, url_for, req
+        -uest, session, flash, get_flashed_messages                      
+      3 +from flask import Flask, render_template, redirect, url_for, req
+        +uest, session, flash, get_flashed_messages, abort               
+      4  from werkzeug.security import generate_password_hash, check_pass
+         word_hash
+      5  
+      6  from database.db import get_db, init_db, seed_db
+
+● Update(app.py)
+  ⎿  Added 2 lines, removed 2 lines
+      294          expense = get_expense_by_id(id, user_id)
+      295          if expense is None:
+      296              # Expense not found or doesn't belong to user
+      297 -            return render_template("error.html", message="Expe
+          -nse not found"), 404                                          
+      297 +            abort(404)                                        
+      298  
+      299          categories = ["Food", "Transport", "Bills", "Health", 
+           "Entertainment", "Shopping", "Other"]
+      300          return render_template("edit_expense.html", expense=ex
+           pense, categories=categories)
+     ...
+      303      expense = get_expense_by_id(id, user_id)
+      304      if expense is None:
+      305          # Expense not found or doesn't belong to user
+      306 -        return render_template("error.html", message="Expense 
+          -not found"), 404                                              
+      306 +        abort(404)                                            
+      307  
+      308      amount_str = request.form.get("amount", "").strip()
+      309      category = request.form.get("category", "").strip()
+
+● Bash(python -m py_compile app.py)
+  ⎿  (No output)
+
+● Bash(python -m py_compile database/queries.py)
+  ⎿  (No output)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ /exit                                                                         
+  ⎿  Goodbye!

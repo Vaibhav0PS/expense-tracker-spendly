@@ -132,7 +132,7 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     """
     Return list of recent transactions, newest first.
 
-    Each dict has: date, description, category, amount, cls
+    Each dict has: id, date, description, category, amount, cls
     Amount is formatted as "₹X,XXX.XX".
     """
     conn = get_db()
@@ -140,7 +140,7 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     date_clause, date_params = _date_clause(date_from, date_to)
     cursor.execute(
         """
-        SELECT date, description, category, amount
+        SELECT id, date, description, category, amount
         FROM expenses
         WHERE user_id = ?""" + date_clause + """
         ORDER BY date DESC, id DESC
@@ -154,6 +154,7 @@ def get_recent_transactions(user_id, limit=10, date_from=None, date_to=None):
     transactions = []
     for row in rows:
         transactions.append({
+            "id": row["id"],
             "date": _format_date(row["date"]),
             "desc": row["description"] or "",
             "category": row["category"],
@@ -237,3 +238,61 @@ def insert_expense(user_id, amount, category, date, description):
     except Exception:
         conn.close()
         return None
+
+
+def get_expense_by_id(expense_id, user_id):
+    """
+    Retrieve a single expense by ID, only if it belongs to the given user.
+
+    Args:
+        expense_id (int): The ID of the expense to retrieve
+        user_id (int): The ID of the user who should own the expense
+
+    Returns:
+        dict: Expense data if found and owned by user, None otherwise
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, user_id, amount, category, date, description, created_at "
+        "FROM expenses WHERE id = ? AND user_id = ?",
+        (expense_id, user_id),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_expense(expense_id, user_id, amount, category, date, description):
+    """
+    Update an existing expense, only if it belongs to the given user.
+
+    Args:
+        expense_id (int): The ID of the expense to update
+        user_id (int): The ID of the user who should own the expense
+        amount (float): The new amount
+        category (str): The new category
+        date (str): The new date in YYYY-MM-DD format
+        description (str): The new description (can be None)
+
+    Returns:
+        bool: True if update succeeded, False otherwise
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            UPDATE expenses
+            SET amount = ?, category = ?, date = ?, description = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (amount, category, date, description, expense_id, user_id),
+        )
+        conn.commit()
+        rows_affected = cursor.rowcount
+        conn.close()
+        return rows_affected > 0
+    except Exception:
+        conn.close()
+        return False
