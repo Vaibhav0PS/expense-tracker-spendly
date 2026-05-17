@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from flask import Flask, render_template, redirect, url_for, request, session, flash, get_flashed_messages
+from flask import Flask, render_template, redirect, url_for, request, session, flash, get_flashed_messages, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database.db import get_db, init_db, seed_db
+from database.queries import get_expense_by_id, update_expense
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "spendly-secret-key-change-in-production"
@@ -283,9 +284,72 @@ def add_expense():
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        expense = get_expense_by_id(id, user_id)
+        if expense is None:
+            # Expense not found or doesn't belong to user
+            abort(404)
+
+        categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+        return render_template("edit_expense.html", expense=expense, categories=categories)
+
+    # POST request
+    expense = get_expense_by_id(id, user_id)
+    if expense is None:
+        # Expense not found or doesn't belong to user
+        abort(404)
+
+    amount_str = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+    date_str = request.form.get("date", "").strip()
+    description = request.form.get("description", "").strip()
+
+    categories = ["Food", "Transport", "Bills", "Health", "Entertainment", "Shopping", "Other"]
+
+    if not amount_str:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Amount is required.")
+
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Amount must be a valid number.")
+
+    if amount <= 0:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Amount must be greater than zero.")
+
+    if not category:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Category is required.")
+
+    if category not in categories:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Invalid category selected.")
+
+    if not date_str:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Date is required.")
+
+    try:
+        parsed_date = datetime.strptime(date_str, "%Y-%m-%d")
+        today = datetime.now().date()
+        if parsed_date.date() > today:
+            return render_template("edit_expense.html", expense=expense, categories=categories, error="Date cannot be in the future.")
+    except ValueError:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Invalid date format.")
+
+    if not description:
+        description = None
+
+    success = update_expense(id, user_id, amount, category, date_str, description)
+
+    if not success:
+        return render_template("edit_expense.html", expense=expense, categories=categories, error="Failed to update expense. Please try again.")
+
+    flash("Expense updated successfully!")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")
